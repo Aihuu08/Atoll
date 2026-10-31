@@ -21,6 +21,10 @@ git diff --stat e13f4aba3fc3c459a38cd0757322754c8558c476..HEAD
 | AppleScript / 剪贴板 | AirPlay 设备名先转义 `\` 再转义 `"`；剪贴板跳过 `org.nspasteboard.ConcealedType` 等标记 | 修复注入（F8）；密码不落盘（F7） | 极小 |
 | Gemini / Claude | Gemini key 改走 `x-goog-api-key` 请求头；Claude 额度 `allowsTokenRefresh = false` | key 不进 URL/日志（F9）；不再轮换 Claude Code 的令牌（F6） | Claude 令牌过期后额度显示为空，等 Claude Code 自己刷新（用一次 `claude` 命令）即可恢复 |
 | 汉化 | `Localizable.xcstrings` 补全 209 条 zh-Hans（覆盖率 99.9%）并统一术语；新增 `zh-Hans.lproj/InfoPlist.strings`（权限弹窗中文）；`knownRegions` 加 `zh-Hans` | 中文界面 | 只改了文本；JSON 格式与 Xcode 输出逐字节一致（已用脚本确认） |
+| 扩展授权弹窗 | 首次授权弹 `NSAlert` 让你确认；拒绝/撤销的不再被自动重新授权（原来 RPC 会） | 扩展不能再静默获得权限（AUDIT F21） | 弹窗用 `runModal` 阻塞主线程，直到你点击 |
+| API key 存钥匙串 | 新增 `managers/ScreenAssistantAPIKeys.swift`；AI 助手 4 个 key 改存钥匙串，启动时自动迁移旧值 | key 不再明文存 plist（F9） | 第一次读取时 macOS 可能弹出钥匙串访问提示 |
+| 移除库验证例外 | entitlements 删掉 `disable-library-validation` | 恢复 hardened runtime 的库验证（F11） | **如果启动就崩溃，先回退这一个提交** |
+| 汉化第二轮 | 145 处写死的字符串改为 `String(localized:)`；新增 zh-Hans 168 条 | 错误提示、窗口标题、专注模式名称等显示中文 | 只是给字面量加包装，`swiftc -parse` 语法检查通过 |
 | 工具 | `tools/check_xcstrings.py` | 校验 xcstrings | 不在 App target 内 |
 | 文档 | `docs/audit/AUDIT.md`、本文件 | — | — |
 
@@ -40,7 +44,13 @@ git diff --stat e13f4aba3fc3c459a38cd0757322754c8558c476..HEAD
 xcodebuild -project DynamicIsland.xcodeproj -scheme DynamicIsland -configuration Debug -onlyUsePackageVersionsFromResolvedFile build
 ```
 
-如果在 Mac 上用 Claude Code 编译遇到错误，最可能出问题的是 `DynamicIsland/services/Extensions/ExtensionRPCServer.swift` 里 `wsOptions.setClientRequestHandler(queue) { ... }` 这一段（API 签名凭记忆写的）。实在编不过可以先删掉这一段，扩展默认关闭时它不影响安全。
+已在云端用 Swift 6.0.3（Linux）对全部改动的 Swift 文件做了 `swiftc -parse`，**语法**全部通过。Linux 上没有 AppKit/Network/Security，做不了**类型检查**。`setClientRequestHandler` 和 `NWProtocolWebSocket.Response(status:subprotocol:additionalHeaders:)` 的签名已对照 Apple 文档核实。
+
+最可能出现的编译问题：
+- `String(localized: "…\(x)…")` 中插值的类型不受支持（已逐个确认都是 `String` 或 `Int`，理论上没问题）
+- Swift 6 严格并发检查：`DynamicIslandApp.swift` 里 `Defaults.publisher(...).sink { Task { @MainActor ... } }`，以及 `setClientRequestHandler` 的 `@Sendable` 闭包
+
+实在编不过时，优先做最小修改；扩展相关的代码段在扩展默认关闭时不影响安全。
 
 ## 4. 编译后要验证的点
 
@@ -51,19 +61,20 @@ xcodebuild -project DynamicIsland.xcodeproj -scheme DynamicIsland -configuration
 - [ ] 从 1Password / Bitwarden 复制密码，Atoll 剪贴板历史里不应出现
 - [ ] Mirror（镜子）只在你点开时亮摄像头指示灯
 - [ ] 如果打开了 LLM 用量 → Claude：能显示额度，且 Claude Code 不会被登出
+- [ ] AI 助手：原来填过的 key 仍然可用；在“钥匙串访问”里搜索 `com.Ebullioscopic.Atoll.screen-assistant` 能看到条目；执行 `defaults read com.Ebullioscopic.Atoll.dev geminiApiKey` 应当报不存在（Debug 版用 `.dev`）
+- [ ] 扩展开关打开后，第一次有扩展连接时会弹出中文的授权确认框
+- [ ] App 正常启动（验证移除 `disable-library-validation` 后没有问题）
 - [ ] 校验翻译文件（只校验格式）：`python3 tools/check_xcstrings.py`
 
 ## 5. 建议在 Mac 上继续做（本分支未做）
 
-- 删除 entitlements 里的 `com.apple.security.cs.disable-library-validation`，验证媒体控制、歌词、锁屏等功能是否正常（AUDIT F11）
-- 把 ATS 的 `NSAllowsArbitraryLoads` 改成 `NSAllowsLocalNetworking`，验证 LocalSend / YouTube Music / Ollama（F12）
+- ATS 的 `NSAllowsArbitraryLoads` 有意保留（理由见 AUDIT F12）
 - 从 `ungive/mediaremote-adapter` 源码重建 `MediaRemoteAdapter.framework` 和 `NowPlayingTestClient`，与仓库里的文件比对，或至少执行 `codesign -dvvv` 查看签名者
-- Screen Assistant 的 API key 迁移到钥匙串（可复用 `NewAPIKeychain`）
 - 在 fork 的 GitHub Settings → Actions 里禁用 Actions（定时任务 `update-pricing`、`nightly-merge` 在 fork 上没用）
 
 ## 6. 明确**没有**验证的事
 
-- 没有编译，也没有运行，**不能说“构建通过”**
+- 没有编译，也没有运行，**不能说“构建通过”**。只做了 `swiftc -parse` 语法检查
 - 没有验证 `NSXPCListener` 关闭后再次创建是否成功（只在你切换扩展开关时才会发生）
 - 没有验证 Network.framework 是否把 `Origin` 头放进 `additionalHeaders`
 - 没有审计 SwiftPM 依赖本身的源码

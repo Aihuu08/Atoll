@@ -32,16 +32,16 @@
 |---|---|---|---|---|---|
 | F1 | 高 | `services/Extensions/ExtensionRPCService.swift:154`、`ExtensionRPCServer.swift:390`、`managers/Extensions/ExtensionAuthorizationManager.swift:213`、`models/Constants.swift:1381,1394`、`DynamicIslandApp.swift:709-710` | RPC `atoll.requestAuthorization` 注释写着 “Auto-authorize for now”，对任意自报的 bundleIdentifier 直接授权；默认 scope = 全部（含 `fileSharing`）；`enableThirdPartyExtensions`、`enableExtensionFileSharing` 默认 `true`；XPC/RPC 在启动时无条件监听 | 已确认 | **已修复**：两个开关默认关闭；只在开关打开时监听；新授权不再默认给 `fileSharing` |
 | F2 | 高 | `ExtensionRPCService.swift:576` | `tempDir.appendingPathComponent(fileName)`，`fileName` 来自客户端，可含 `../` → 任意路径写文件 | 已确认 | **已修复**：只取 `lastPathComponent`，拒绝 `.`/`..`/隐藏文件，并校验最终目录 |
-| F3 | 高 | `ExtensionRPCService.swift:551`、`:450` | `addFilesToShelf` 的 `paths` 接受任意本地路径，`getShelfItemData` 返回 base64 文件内容 → 已授权客户端可读任意文件 | 已确认 | 由 F1 的默认关闭 + 不默认给 `fileSharing` 缓解；**未改逻辑**。若要启用扩展，建议把 `paths` 限制为用户通过 `showFilePicker` 选过的文件 |
-| F4 | 高（推测） | `ExtensionRPCServer.swift` `makeListener` | WebSocket 握手不检查 `Origin`，浏览器页面可尝试连 `ws://127.0.0.1:9020` | 推测（取决于浏览器的本地网络访问策略） | **已加固**：带 `Origin` 头的握手直接拒绝。Network.framework 是否把 `Origin` 放进 `additionalHeaders` 需要在 Mac 上验证 |
+| F3 | 高 | `ExtensionRPCService.swift:551`、`:450` | `addFilesToShelf` 的 `paths` 接受任意本地路径，`getShelfItemData` 返回 base64 文件内容 → 已授权客户端可读任意文件 | 已确认 | **已缓解**：扩展默认关闭；首次授权需用户在弹窗中确认（F21）；`fileSharing` 不再默认授予，需在设置里手动勾选。`paths` 逻辑本身未改 |
+| F4 | 高（推测） | `ExtensionRPCServer.swift` `makeListener` | WebSocket 握手不检查 `Origin`，浏览器页面可尝试连 `ws://127.0.0.1:9020` | 推测（取决于浏览器的本地网络访问策略） | **已加固**：带 `Origin` 头的握手直接拒绝。API 签名已对照 Apple 文档核实；Apple 论坛的实测输出显示 `Host` 等标准头也会出现在 `additionalHeaders` 里，`Origin` 大概率同样会出现（仍需在 Mac 上验证）。官方 Swift SDK（AtollExtensionKit）只用 XPC，不使用 WebSocket，因此不受影响 |
 | F5 | 高 | `Info.plist:20`、`models/UpdateChannel.swift:53`、`DynamicIslandApp.swift:43` | 上游 feed + 上游 EdDSA 公钥，自动检查更新 | 已确认 | **已修复**：`AtollUpdaterDelegate.isUpdaterEnabled = false`，不启动 updater，删掉 `SUFeedURL`，关闭自动检查/自动更新 |
 | F6 | 中 | `managers/LLMUsage/Quota/ClaudeQuotaClient.swift:175,189,231,140`、`KeychainReader.swift` | 读取 `~/.claude/.credentials.json` → 钥匙串 `Claude Code-credentials*`；过期后用 refresh token 刷新并写回；伪装 UA | 已确认 | **已修复**：`allowsTokenRefresh = false`，只读不刷新、不写回。默认 `enableLLMUsageFeature = false`（:1283），但打开后 Claude provider 默认开（:1284） |
 | F7 | 中 | `managers/ClipboardManager.swift:562`、`Constants.swift:1359,1364` | 剪贴板管理默认开、持久化默认开，存 UserDefaults 明文；不识别 Concealed/Transient 标记 | 已确认 | **已修复**：带 nspasteboard.org 标记的内容不入历史。仍建议在设置里关闭“持久化剪贴板历史” |
 | F8 | 中 | `managers/AppleMusicAirPlayManager.swift:123,217` | 只转义 `"`，不转义 `\` | 已确认（代码），推测（可利用性） | **已修复**：先转义 `\` 再转义 `"`，换行替换为空格 |
-| F9 | 中 | `managers/ScreenAssistantManager.swift:418`、`Constants.swift:1371-1374` | Gemini key 拼进 URL query；四个 API key 存 `Defaults`（UserDefaults 明文 plist） | 已确认 | **部分修复**：Gemini key 改走 `x-goog-api-key` 头。迁移到钥匙串**未做**（见第 7 节，改动量中等） |
-| F10 | 中 | `services/Extensions/ExtensionXPCServiceHost.swift:129`、`ExtensionXPCService.swift:57` | XPC 连接方身份 = `NSRunningApplication(processIdentifier:)` 的 bundleIdentifier，无 audit token / 代码签名校验，有 PID 复用竞争；首次连接自动授权 | 已确认 | F1 默认关闭后不监听；若要启用，建议 `connection.setCodeSigningRequirement(...)`（macOS 13+）|
-| F11 | 中 | `DynamicIsland.entitlements:5` | `com.apple.security.cs.disable-library-validation = true`（构建设置 `RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO` 不会覆盖 entitlements 文件里的显式值） | 已确认 | `MediaRemoteAdapter.framework` 只作为 Resources 由 `/usr/bin/perl` 加载，App 本身看起来不需要该例外。**未改**，列入 Mac 待办：删除后验证所有功能 |
-| F12 | 中 | `Info.plist:7` | ATS `NSAllowsArbitraryLoads = true` | 已确认 | **未改**：LocalSend（局域网 http）、YouTube Music（`localhost:26538`）、自定义 Ollama 地址、用户自填的动画 URL 依赖 http。可改为 `NSAllowsLocalNetworking`，需 Mac 验证 |
+| F9 | 中 | `managers/ScreenAssistantManager.swift:418`、`Constants.swift:1371-1374` | Gemini key 拼进 URL query；四个 API key 存 `Defaults`（UserDefaults 明文 plist） | 已确认 | **已修复**：Gemini key 改走 `x-goog-api-key` 头；4 个 key 迁到钥匙串（`managers/ScreenAssistantAPIKeys.swift`），启动时自动迁移旧值并清空 UserDefaults |
+| F10 | 中 | `services/Extensions/ExtensionXPCServiceHost.swift:129`、`ExtensionXPCService.swift:57` | XPC 连接方身份 = `NSRunningApplication(processIdentifier:)` 的 bundleIdentifier，无 audit token / 代码签名校验，有 PID 复用竞争；首次连接自动授权 | 已确认 | **已缓解**：默认不监听；首次授权改为弹窗确认（F21）。代码签名校验**未做**：需要知道扩展的签名要求，自用场景下意义不大 |
+| F11 | 中 | `DynamicIsland.entitlements:5` | `com.apple.security.cs.disable-library-validation = true`（构建设置 `RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO` 不会覆盖 entitlements 文件里的显式值） | 已确认 | **已移除**：App 只 `dlopen`/`Bundle.load` 系统框架（DisplayServices、IOReport、CoreBrightness、SkyLight），`MediaRemoteAdapter.framework` 只放在 Resources 里由 `/usr/bin/perl` 加载。需在 Mac 上验证启动和各项功能；若启动崩溃，回退该提交即可 |
+| F12 | 中 | `Info.plist:7` | ATS `NSAllowsArbitraryLoads = true` | 已确认 | **有意未改**：所有写死的外部地址都是 https，收紧 ATS 收益有限；而 LocalSend（局域网 IP 上的 http）、YouTube Music（`localhost:26538`）、自定义 Ollama 地址、用户自填的动画 URL 都依赖 http，改了以后这些功能会悄悄失效、不容易发现 |
 | F13 | 低 | `components/Shelf/Services/LocalSendService.swift:627,1058` | 打开分享面板时在所有网卡上监听 LocalSend 端口（只处理 register 请求，不接收文件）；TLS 代理接受任意证书（LocalSend 协议本身使用自签证书） | 已确认 | 仅用户触发；局域网中间人可截获你**发出**的文件。不用 LocalSend 可忽略 |
 | F14 | 低 | `managers/SpotifyAuthManager.swift:36`、`Constants.swift:1244` | 从第三方仓库 `xyloflake/spot-secrets-go` 拉取 TOTP 密钥（数据，不是代码）；`sp_dc` Cookie 明文存 UserDefaults | 已确认 | 只有手动填了 sp_dc Cookie 才会触发。Cookie 只发往 `open.spotify.com`。不用 Spotify Canvas 可忽略 |
 | F15 | 低 | `components/Extensions/ExtensionLockScreenWidgetView.swift:357` | 扩展 HTML 用 `loadHTMLString(baseURL: nil)` 加载；导航策略只管顶层导航，不拦截 JS 的 `fetch`/图片等子资源；**没有** JS bridge（未发现 `WKScriptMessageHandler`） | 已确认 | 扩展关闭时不涉及 |
@@ -49,6 +49,7 @@
 | F17 | 信息 | `managers/LLMUsage/ModelPricingManager.swift:98` | 启动 LLM 用量功能后从上游 `dev` 分支拉 `pricing.json`（纯 JSON 价格表，解码后只用于计算费用） | 已确认 | 数据而非代码。介意可删掉远程拉取，只用内置表 |
 | F18 | 信息 | `managers/WebcamManager.swift:212`、`CameraMonitor.swift` | 摄像头只有 `AVCaptureVideoPreviewLayer` + 未设置 delegate 的 `AVCaptureVideoDataOutput`；`CameraMonitor` 只用 CoreMediaIO 属性 `DeviceIsRunningSomewhere` 检测别的 App 是否在用摄像头，自己不开 session | 已确认 | 无问题 |
 | F19 | 信息 | `managers/TerminalManager.swift:294`、`Constants.swift:1301` | 刘海终端（SwiftTerm 本地进程）默认关闭；shell 路径来自用户设置 | 已确认 | 不用就保持关闭 |
+| F21 | 高 | `ExtensionRPCService.swift:139-158` | RPC 授权只要条目不是“已授权”就自动授权，**连用户拒绝或撤销过的条目也会被重新授权**，设置里的撤销实际无效 | 已确认 | **已修复**：只有 `pending` 状态才弹窗询问（XPC 同样）；拒绝或撤销后需在设置中手动恢复。WebSocket 来源的弹窗会注明“无法验证身份” |
 | F20 | 信息 | 仓库全局 | 未发现写给 AI 助手的指令、未发现长 base64/混淆脚本、未发现遥测/统计/崩溃上报 SDK | 已确认（grep 范围内） | — |
 
 ---
@@ -148,6 +149,13 @@
 | SwiftTerm | 1.13.0 | `8e7a1e15` | 刘海终端 |
 | swiftui-introspect | 1.3.0 | `807f73ce` | SwiftUI 内省 |
 
+**本次额外审计了 5 个跟踪 `main` 分支的依赖在固定 revision 上的源码**（clone 后只读）：
+- AtollExtensionKit `e2d30af`：约 2300 行 Swift，只用 `NSXPCConnection(machServiceName:)` 与 Atoll 通信；没有网络请求、子进程、钥匙串或 UserDefaults 访问。
+- SkyLightWindow `4a7e862`：276 行，`dlopen` 系统私有框架 `SkyLight` 并 `dlsym` 几个 `SLS*` 函数，用来把窗口放到锁屏层；没有网络请求、没有其他可疑内容。
+- LaunchAtLogin-Modern `a04ec1c`：156 行，基于 `SMAppService`，无可疑内容。
+- LottieUI `0cd5b54`：946 行，只有示例工程里引用了 lottiefiles 的 URL。
+- lottie-spm `04f2fd1`：airbnb 官方预编译的 `Lottie.xcframework` 4.5.2（从 GitHub Release 下载，SwiftPM 会校验 checksum `92206ff6…6694`）。
+
 标为 **branch main** 的 5 个依赖：Xcode 正常构建会使用 `Package.resolved` 里固定的 revision，但如果执行了 “Update to Latest Package Versions” 或删掉了 `Package.resolved`，就会拉取最新提交。建议命令行构建时加 `-onlyUsePackageVersionsFromResolvedFile`，并且不要在 Xcode 里点“更新包”。
 
 ### 预编译产物
@@ -173,15 +181,15 @@
 
 ## 7. 未能审计 / 必须在 Mac 上验证
 
-1. 编译本分支（本环境**无法编译**，没有任何“构建通过”的结论）。重点是本分支改过的 Swift 文件：`DynamicIslandApp.swift`、`ExtensionRPCServer.swift`（`setClientRequestHandler` API）、`ExtensionRPCService.swift`、`ClipboardManager.swift`、`AppleMusicAirPlayManager.swift`、`ScreenAssistantManager.swift`、`ClaudeQuotaClient.swift`、`AtollUpdaterDelegate.swift`。
+1. 编译本分支。本环境**无法编译**，没有任何“构建通过”的结论。已用 Swift 6.0.3（Linux）对全部 41 个改动的 Swift 文件执行 `swiftc -parse`，**语法**全部通过；但 Linux 上没有 AppKit/Network/Security，**类型检查做不了**。
 2. 扩展开关打开后，用 `websocat ws://127.0.0.1:9020`（不带 Origin）能连上；在浏览器控制台 `new WebSocket("ws://127.0.0.1:9020")` 应被拒绝。若浏览器也能连上，说明 `Origin` 不在 `additionalHeaders` 里，需要换方案。
 3. 关闭再打开“启用第三方扩展”后，XPC listener 能否重新创建成功（`NSXPCListener(machServiceName:)` 二次创建）。
-4. 删除 `disable-library-validation` 后功能是否正常（F11）。
-5. 把 ATS 改为 `NSAllowsLocalNetworking` 后 LocalSend / YouTube Music / Ollama 是否正常（F12）。
+4. 删除 `disable-library-validation` 后 App 能否启动、各功能是否正常（F11）。
+5. 首次连接扩展时会弹出授权确认框（F21）；AI 助手原来填过的 key 迁到钥匙串后仍然可用（F9）。
 6. 重建并比对 `MediaRemoteAdapter.framework`、`NowPlayingTestClient`。
 7. 运行时抓包（Little Snitch / LuLu）确认实际出站主机与第 4 节一致。
 8. 音频捕获、日历、蓝牙、定位等权限的实际触发时机（第 3 节标“未逐项核实”的项）。
-9. **未检查**：SwiftPM 依赖本身的源码（只核对了来源和版本）；`SkyLightWindow` 使用的私有 API；Metal shader；`DynamicIslandTests`/`DynamicIslandUITests` 内容。
+9. **未检查**：版本号固定的那些 SwiftPM 依赖（Sparkle、Defaults、SwiftTerm 等知名项目）的源码；Metal shader；`DynamicIslandTests`/`DynamicIslandUITests` 内容。
 
 ---
 
@@ -192,6 +200,10 @@
 - 第三方扩展、扩展文件共享默认关闭，不再无条件监听 XPC 和 9020 端口（F1）
 - Claude 额度只读（F6）
 - 剪贴板不记录密码类内容（F7）
+- 扩展首次授权需弹窗确认，拒绝/撤销后不会被自动重新授权（F21）
+- AI 助手 API key 存钥匙串（F9）
+- 移除 `disable-library-validation`（F11）
+- AirPlay AppleScript 注入、扩展路径穿越、Gemini key 进 URL 等具体漏洞（F2、F8、F9）
 
 建议你在设置里手动确认 / 关闭：
 
@@ -206,14 +218,17 @@
 | 锁屏天气 | 按需 | 会把坐标发给天气服务 |
 | Spotify sp_dc Cookie | 不填 | 完整会话 Cookie 明文存储 |
 
-后续可选加固（本分支**未做**）：
-- Screen Assistant 的 4 个 API key 迁移到钥匙串：项目里已有 `NewAPIKeychain`（`managers/LLMUsage/NewAPIUsage.swift`）可复用；需要改 `Constants.swift` 中 4 个 key、`ScreenAssistantManager` 读取处和设置页的绑定（大约 4 个文件，中等改动），并做一次迁移（读出旧值写入钥匙串后清空）。
-- XPC 加代码签名校验（`setCodeSigningRequirement`）；RPC 的 `paths` 限制为用户选过的文件；授权改为弹窗由用户确认。
+后续可选（本分支**未做**）：
+- XPC 加代码签名校验（`setCodeSigningRequirement`）；RPC 的 `paths` 限制为用户选过的文件。
 - 改用自己的 Bundle ID（例如 `com.<你>.Atoll`），与上游的设置和 TCC 授权彻底隔离。注意 XPC mach service 名是写死的 `com.ebullioscopic.Atoll.xpc`，与 Bundle ID 无关。
 
 ---
 
-## 9. 不会被自动本地化的字符串（只列清单，未改代码）
+## 9. 不会被自动本地化的字符串
+
+**已处理（第二轮）**：用 `String(localized:)` 包裹了 145 处写死的界面字符串，包括窗口/面板标题、Screen Assistant 错误提示、Spotify/New API/更新状态文案、专注模式名称、隐私指示、计时器状态、各 `LocalizedError` 描述，以及“刚刚 / N 分钟前”等相对时间；另外补上了 50 条代码中已使用、但 xcstrings 里缺失的键。新增 zh-Hans 共 168 条。品牌名和标识符保持原样，并确认这些字符串没有参与逻辑比较。
+
+剩余未处理（下表为第一轮扫描的原始清单，大部分已在上述处理中覆盖）：
 
 | 类别 | 位置示例 | 数量（约） |
 |---|---|---|
