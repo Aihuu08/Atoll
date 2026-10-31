@@ -55,9 +55,20 @@ final class ExtensionXPCService: NSObject, @preconcurrency AtollXPCServiceProtoc
             let entry = self.authorizationManager.ensureEntryExists(bundleIdentifier: self.bundleIdentifier, appName: self.resolvedApplicationName())
 
             if entry.status == .pending {
-                self.authorizationManager.authorize(bundleIdentifier: self.bundleIdentifier, appName: self.resolvedApplicationName())
-                self.host?.notifyAuthorizationChange(bundleIdentifier: self.bundleIdentifier, isAuthorized: true)
-                reply(true, nil)
+                // fork 加固：首次请求时弹窗让用户确认，不再自动授权。
+                let appName = self.resolvedApplicationName()
+                let allowed = self.authorizationManager.requestUserConsent(
+                    bundleIdentifier: self.bundleIdentifier,
+                    appName: appName,
+                    identityVerified: true
+                )
+                if allowed {
+                    self.authorizationManager.authorize(bundleIdentifier: self.bundleIdentifier, appName: appName)
+                } else {
+                    self.authorizationManager.deny(bundleIdentifier: self.bundleIdentifier, reason: "Denied by user")
+                }
+                self.host?.notifyAuthorizationChange(bundleIdentifier: self.bundleIdentifier, isAuthorized: allowed)
+                reply(allowed, allowed ? nil : ExtensionValidationError.unauthorized.asNSError)
                 return
             }
 

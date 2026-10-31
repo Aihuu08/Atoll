@@ -151,11 +151,23 @@ final class ExtensionRPCService {
             return RPCSuccessResponse(result: ["authorized": .bool(true)], id: id)
         }
 
-        // Auto-authorize for now (user can revoke in settings)
-        authorizationManager.authorize(bundleIdentifier: bi, appName: bi)
-        logDiagnostics("Authorized RPC client \(bi)")
+        // fork 加固：原来这里对任何自报身份直接自动授权，而且会把用户拒绝/撤销过的
+        // 条目重新授权。现在只有“待定”状态才弹窗询问；拒绝/撤销的需要用户在设置里恢复。
+        guard entry.status == .pending else {
+            logDiagnostics("RPC authorization refused for \(bi): status \(entry.status.rawValue)")
+            return RPCSuccessResponse(result: ["authorized": .bool(false)], id: id)
+        }
 
-        return RPCSuccessResponse(result: ["authorized": .bool(true)], id: id)
+        let allowed = authorizationManager.requestUserConsent(bundleIdentifier: bi, appName: bi, identityVerified: false)
+        if allowed {
+            authorizationManager.authorize(bundleIdentifier: bi, appName: bi)
+            logDiagnostics("User authorized RPC client \(bi)")
+        } else {
+            authorizationManager.deny(bundleIdentifier: bi, reason: "Denied by user")
+            logDiagnostics("User denied RPC client \(bi)")
+        }
+
+        return RPCSuccessResponse(result: ["authorized": .bool(allowed)], id: id)
     }
 
     private func handleCheckAuthorization(params: RPCParams?, id: String) -> Codable {

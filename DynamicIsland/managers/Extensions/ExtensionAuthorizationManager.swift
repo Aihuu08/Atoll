@@ -16,6 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+import AppKit
 import Foundation
 import Defaults
 import AtollExtensionKit
@@ -81,6 +82,36 @@ final class ExtensionAuthorizationManager: ObservableObject {
             entry.grantedAt = .now
             entry.lastDeniedReason = nil
         }
+    }
+
+    /// 正在弹窗询问的扩展，避免同一个扩展的重复请求叠出多个弹窗。
+    private var consentInFlight: Set<String> = []
+
+    /// fork 加固：扩展首次请求授权时弹窗让用户确认，取代原来的自动授权。
+    ///
+    /// - Parameters:
+    ///   - identityVerified: XPC 连接的身份来自系统提供的进程信息；WebSocket 客户端的
+    ///     bundleIdentifier 是对方自己声明的，无法验证，弹窗里会明确提示。
+    /// - Returns: 用户点了“允许”返回 true。正在询问同一扩展时直接返回 false。
+    func requestUserConsent(bundleIdentifier: String, appName: String, identityVerified: Bool) -> Bool {
+        guard !consentInFlight.contains(bundleIdentifier) else { return false }
+        consentInFlight.insert(bundleIdentifier)
+        defer { consentInFlight.remove(bundleIdentifier) }
+
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = String(localized: "Allow “\(appName)” to use Atoll extensions?")
+        var details = String(localized: "It will be able to show live activities, lock screen widgets and notch content. File sharing stays off until you enable it in Settings → Extensions.")
+        details += "\n\n" + String(localized: "Identifier: \(bundleIdentifier)")
+        if !identityVerified {
+            details += "\n\n" + String(localized: "This request came from a local network connection. Atoll cannot verify which app sent it. Only allow it if you just started an extension yourself.")
+        }
+        alert.informativeText = details
+        alert.addButton(withTitle: String(localized: "Don't Allow"))
+        alert.addButton(withTitle: String(localized: "Allow"))
+
+        NSApp.activate(ignoringOtherApps: true)
+        return alert.runModal() == .alertSecondButtonReturn
     }
 
     func deny(bundleIdentifier: String, reason: String?) {
