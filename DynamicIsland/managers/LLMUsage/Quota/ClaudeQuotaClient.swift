@@ -22,6 +22,11 @@ struct ClaudeQuotaClient {
     init(session: URLSession = URLSession(configuration: .ephemeral)) { self.session = session }
 
     private static let clientID = "9d1c250a-e61b-44d9-88ed-5944d1962f5e"
+    /// fork 加固：只读模式。Atoll 只读取 Claude Code 的 OAuth 凭据显示额度，
+    /// 不再用 refresh token 刷新、也不再把新令牌写回 ~/.claude/.credentials.json 或钥匙串。
+    /// 刷新会轮换 refresh token，与 Claude Code 自己的刷新存在竞争，失败时可能导致
+    /// Claude Code 登录失效。令牌过期后额度显示为空，等 Claude Code 自己刷新即可恢复。
+    static let allowsTokenRefresh = false
     private static let refreshScope = "user:profile user:inference user:sessions:claude_code user:mcp_servers user:file_upload"
     /// Where a credential was read from, so a refreshed pair can be written back to the
     /// same item and nothing else: service alone can match several Keychain items.
@@ -213,6 +218,7 @@ struct ClaudeQuotaClient {
         // before spending the refresh token we hold.
         let reloaded = await reloadCredentials()
         if let reloaded, reloaded.expiresAt > nowMs { return reloaded.accessToken }
+        guard Self.allowsTokenRefresh else { return nil }
         let current = reloaded ?? creds
 
         // Do not consume a shared refresh token if this credential cannot be

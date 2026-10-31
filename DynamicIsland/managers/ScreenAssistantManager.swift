@@ -415,14 +415,21 @@ class ScreenAssistantManager: NSObject, ObservableObject {
         let selectedModel = Defaults[.selectedAIModel] ?? AIModel(id: "gemini-2.5-flash", name: "Gemini 2.5 Flash", supportsThinking: true)
         let modelId = selectedModel.id
         
-        guard let url = URL(string: "https://generativelanguage.googleapis.com/v1beta/models/\(modelId):generateContent?key=\(apiKey)") else {
+        // 安全：API key 放在 x-goog-api-key 请求头里，不再拼进 URL query，
+        // 避免出现在错误描述（NSErrorFailingURLStringKey）和日志中。
+        guard let url = URL(string: "https://generativelanguage.googleapis.com/v1beta/models/\(modelId):generateContent") else {
             print("❌ ScreenAssistant: Invalid Gemini API URL")
             addAssistantMessage("Error: Invalid API URL")
             isLoading = false
             return
         }
         
-        performAPIRequest(url: url, requestBody: buildGeminiRequestBody(message: message, files: files), provider: .gemini)
+        performAPIRequest(
+            url: url,
+            requestBody: buildGeminiRequestBody(message: message, files: files),
+            provider: .gemini,
+            extraHeaders: ["x-goog-api-key": apiKey]
+        )
     }
     
     private func sendToOpenAIAPI(message: String, files: [ScreenAssistantFile]) {
@@ -681,10 +688,13 @@ class ScreenAssistantManager: NSObject, ObservableObject {
     
     // MARK: - API Request Performers
     
-    private func performAPIRequest(url: URL, requestBody: [String: Any], provider: AIModelProvider) {
+    private func performAPIRequest(url: URL, requestBody: [String: Any], provider: AIModelProvider, extraHeaders: [String: String] = [:]) {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        for (field, value) in extraHeaders {
+            request.setValue(value, forHTTPHeaderField: field)
+        }
         
         do {
             let jsonData = try JSONSerialization.data(withJSONObject: requestBody, options: .prettyPrinted)
