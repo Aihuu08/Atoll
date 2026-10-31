@@ -1098,20 +1098,20 @@ enum LocalSendServiceError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .noDeviceSelected:
-            return "No LocalSend device selected"
+            return String(localized: "No LocalSend device selected")
         case .noTransferableItems:
-            return "No transferable files or text found"
+            return String(localized: "No transferable files or text found")
         case .invalidTarget:
-            return "Invalid LocalSend target"
+            return String(localized: "Invalid LocalSend target")
         case .invalidResponse:
-            return "Invalid response from LocalSend peer"
+            return String(localized: "Invalid response from LocalSend peer")
         case .server(let status, let body):
             if let body, !body.isEmpty {
-                return "LocalSend peer error (\(status)): \(body)"
+                return String(localized: "LocalSend peer error (\(status)): \(body)")
             }
-            return "LocalSend peer error (\(status))"
+            return String(localized: "LocalSend peer error (\(status))")
         case .transferRejected:
-            return "Transfer was rejected by the recipient"
+            return String(localized: "Transfer was rejected by the recipient")
         }
     }
 }

@@ -104,7 +104,7 @@ final class ExtensionAuthorizationManager: ObservableObject {
         var details = String(localized: "It will be able to show live activities, lock screen widgets and notch content. File sharing stays off until you enable it in Settings → Extensions.")
         details += "\n\n" + String(localized: "Identifier: \(bundleIdentifier)")
         if !identityVerified {
-            details += "\n\n" + String(localized: "This request came from a local network connection. Atoll cannot verify which app sent it. Only allow it if you just started an extension yourself.")
+            details += "\n\n" + String(localized: "This request came over a local WebSocket connection. Atoll cannot verify which app sent it. Only allow it if you just started an extension yourself.")
         }
         alert.informativeText = details
         alert.addButton(withTitle: String(localized: "Don't Allow"))

@@ -27,8 +27,10 @@ DEFAULT_FILES = [ROOT / "DynamicIsland" / "Localizable.xcstrings"]
 
 # printf 风格占位符：可选位置参数 n$，可选 flags/宽度/精度，长度修饰符，转换符
 PLACEHOLDER = re.compile(
-    r"%(?:(\d+)\$)?[-+ #0]*\d*(?:\.\d+)?(hh|h|ll|l|q|z|t|j)?([@dDiuUxXoOfFeEgGcCsSpaA])"
+    r"%(?:(\d+)\$)?[-+#0]*\d*(?:\.\d+)?(hh|h|ll|l|q|z|t|j)?([@dDiuUxXoOfFeEgGcCsSpaA])"
 )
+# 注意：故意不支持空格 flag（"% d"）。英文里常见 "100% and" 这类写法，
+# 若把空格当 flag 会被误判成 "%a" 占位符。
 
 
 def placeholders(text: str) -> list[str]:

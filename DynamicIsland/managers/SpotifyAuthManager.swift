@@ -31,7 +31,7 @@ final class SpotifyAuthManager: ObservableObject {
     @Published private(set) var isAuthenticated = false
     @Published private(set) var isAuthorizing = false
     @Published private(set) var authErrorMessage: String?
-    @Published private(set) var sessionStatusText = "Spotify cookie not configured."
+    @Published private(set) var sessionStatusText = String(localized: "Spotify cookie not configured.")
 
     private let secretsURL = URL(string: "https://raw.githubusercontent.com/xyloflake/spot-secrets-go/main/secrets/secretDict.json")!
     private let tokenURL = URL(string: "https://open.spotify.com/api/token")!
@@ -58,7 +58,7 @@ final class SpotifyAuthManager: ObservableObject {
         restorePersistedState()
 
         guard !sanitizedCookie.isEmpty else {
-            authErrorMessage = "Paste the Spotify sp_dc cookie first."
+            authErrorMessage = String(localized: "Paste the Spotify sp_dc cookie first.")
             return
         }
 
@@ -70,7 +70,7 @@ final class SpotifyAuthManager: ObservableObject {
 
         guard await validAccessToken(forceRefresh: true) != nil else {
             if authErrorMessage == nil {
-                authErrorMessage = "Spotify rejected the sp_dc cookie."
+                authErrorMessage = String(localized: "Spotify rejected the sp_dc cookie.")
             }
             return
         }
@@ -211,13 +211,13 @@ final class SpotifyAuthManager: ObservableObject {
         isAuthenticated = !cookie.isEmpty && (hasToken || hasValidatedCookie)
 
         if cookie.isEmpty {
-            sessionStatusText = "Spotify cookie not configured."
+            sessionStatusText = String(localized: "Spotify cookie not configured.")
         } else if hasToken {
-            sessionStatusText = "Spotify Canvas session ready."
+            sessionStatusText = String(localized: "Spotify Canvas session ready.")
         } else if hasValidatedCookie {
-            sessionStatusText = "Cookie saved. The access token will refresh automatically."
+            sessionStatusText = String(localized: "Cookie saved. The access token will refresh automatically.")
         } else {
-            sessionStatusText = "Cookie pasted. Validate it once to enable Canvas lookup."
+            sessionStatusText = String(localized: "Cookie pasted. Validate it once to enable Canvas lookup.")
         }
     }
 

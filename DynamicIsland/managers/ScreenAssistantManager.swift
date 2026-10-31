@@ -406,7 +406,7 @@ class ScreenAssistantManager: NSObject, ObservableObject {
         let apiKey = ScreenAssistantAPIKeys.gemini
         guard !apiKey.isEmpty else {
             print("❌ ScreenAssistant: No Gemini API key configured")
-            addAssistantMessage("Error: No Gemini API key configured. Please set your API key in model settings.")
+            addAssistantMessage(String(localized: "Error: No Gemini API key configured. Please set your API key in model settings."))
             isLoading = false
             return
         }
@@ -419,7 +419,7 @@ class ScreenAssistantManager: NSObject, ObservableObject {
         // 避免出现在错误描述（NSErrorFailingURLStringKey）和日志中。
         guard let url = URL(string: "https://generativelanguage.googleapis.com/v1beta/models/\(modelId):generateContent") else {
             print("❌ ScreenAssistant: Invalid Gemini API URL")
-            addAssistantMessage("Error: Invalid API URL")
+            addAssistantMessage(String(localized: "Error: Invalid API URL"))
             isLoading = false
             return
         }
@@ -436,7 +436,7 @@ class ScreenAssistantManager: NSObject, ObservableObject {
         let apiKey = ScreenAssistantAPIKeys.openai
         guard !apiKey.isEmpty else {
             print("❌ ScreenAssistant: No OpenAI API key configured")
-            addAssistantMessage("Error: No OpenAI API key configured. Please set your API key in model settings.")
+            addAssistantMessage(String(localized: "Error: No OpenAI API key configured. Please set your API key in model settings."))
             isLoading = false
             return
         }
@@ -447,7 +447,7 @@ class ScreenAssistantManager: NSObject, ObservableObject {
         
         guard let url = URL(string: "https://api.openai.com/v1/chat/completions") else {
             print("❌ ScreenAssistant: Invalid OpenAI API URL")
-            addAssistantMessage("Error: Invalid API URL")
+            addAssistantMessage(String(localized: "Error: Invalid API URL"))
             isLoading = false
             return
         }
@@ -459,7 +459,7 @@ class ScreenAssistantManager: NSObject, ObservableObject {
         let apiKey = ScreenAssistantAPIKeys.groq
         guard !apiKey.isEmpty else {
             print("❌ ScreenAssistant: No Groq API key configured")
-            addAssistantMessage("Error: No Groq API key configured. Please set your API key in model settings.")
+            addAssistantMessage(String(localized: "Error: No Groq API key configured. Please set your API key in model settings."))
             isLoading = false
             return
         }
@@ -476,7 +476,7 @@ class ScreenAssistantManager: NSObject, ObservableObject {
         
         guard let url = URL(string: "https://api.groq.com/openai/v1/chat/completions") else {
             print("❌ ScreenAssistant: Invalid Groq API URL")
-            addAssistantMessage("Error: Invalid API URL")
+            addAssistantMessage(String(localized: "Error: Invalid API URL"))
             isLoading = false
             return
         }
@@ -493,7 +493,7 @@ class ScreenAssistantManager: NSObject, ObservableObject {
         let apiKey = ScreenAssistantAPIKeys.claude
         guard !apiKey.isEmpty else {
             print("❌ ScreenAssistant: No Claude API key configured")
-            addAssistantMessage("Error: No Claude API key configured. Please set your API key in model settings.")
+            addAssistantMessage(String(localized: "Error: No Claude API key configured. Please set your API key in model settings."))
             isLoading = false
             return
         }
@@ -504,7 +504,7 @@ class ScreenAssistantManager: NSObject, ObservableObject {
         
         guard let url = URL(string: "https://api.anthropic.com/v1/messages") else {
             print("❌ ScreenAssistant: Invalid Claude API URL")
-            addAssistantMessage("Error: Invalid API URL")
+            addAssistantMessage(String(localized: "Error: Invalid API URL"))
             isLoading = false
             return
         }
@@ -516,14 +516,14 @@ class ScreenAssistantManager: NSObject, ObservableObject {
         let endpoint = Defaults[.localModelEndpoint]
         guard !endpoint.isEmpty else {
             print("❌ ScreenAssistant: No local endpoint configured")
-            addAssistantMessage("Error: No local endpoint configured. Please set your endpoint in model settings.")
+            addAssistantMessage(String(localized: "Error: No local endpoint configured. Please set your endpoint in model settings."))
             isLoading = false
             return
         }
         
         guard let url = URL(string: "\(endpoint)/api/chat") else {
             print("❌ ScreenAssistant: Invalid local API URL")
-            addAssistantMessage("Error: Invalid local API URL")
+            addAssistantMessage(String(localized: "Error: Invalid local API URL"))
             isLoading = false
             return
         }
@@ -703,7 +703,7 @@ class ScreenAssistantManager: NSObject, ObservableObject {
             print("📋 ScreenAssistant: Request body size: \(jsonData.count) bytes")
         } catch {
             print("❌ ScreenAssistant: Failed to encode request - \(error)")
-            addAssistantMessage("Error: Failed to encode request - \(error.localizedDescription)")
+            addAssistantMessage(String(localized: "Error: Failed to encode request - \(error.localizedDescription)"))
             isLoading = false
             return
         }
@@ -739,7 +739,7 @@ class ScreenAssistantManager: NSObject, ObservableObject {
             request.httpBody = jsonData
         } catch {
             print("❌ ScreenAssistant: Failed to encode OpenAI request - \(error)")
-            addAssistantMessage("Error: Failed to encode request - \(error.localizedDescription)")
+            addAssistantMessage(String(localized: "Error: Failed to encode request - \(error.localizedDescription)"))
             isLoading = false
             return
         }
@@ -776,7 +776,7 @@ class ScreenAssistantManager: NSObject, ObservableObject {
             request.httpBody = jsonData
         } catch {
             print("❌ ScreenAssistant: Failed to encode Claude request - \(error)")
-            addAssistantMessage("Error: Failed to encode request - \(error.localizedDescription)")
+            addAssistantMessage(String(localized: "Error: Failed to encode request - \(error.localizedDescription)"))
             isLoading = false
             return
         }
@@ -812,7 +812,7 @@ class ScreenAssistantManager: NSObject, ObservableObject {
         
         if let error = error {
             print("❌ ScreenAssistant: Network error - \(error)")
-            addAssistantMessage("Error: \(error.localizedDescription)")
+            addAssistantMessage(String(localized: "Error: \(error.localizedDescription)"))
             return
         }
         
@@ -826,7 +826,7 @@ class ScreenAssistantManager: NSObject, ObservableObject {
         
         guard let data = data else {
             print("❌ ScreenAssistant: No response data")
-            addAssistantMessage("Error: No response data")
+            addAssistantMessage(String(localized: "Error: No response data"))
             return
         }
         
@@ -864,13 +864,13 @@ class ScreenAssistantManager: NSObject, ObservableObject {
                         handleAPIError(error: error)
                     } else {
                         print("❌ ScreenAssistant: Unexpected Gemini response format")
-                        addAssistantMessage("Error: Unexpected response format from Gemini")
+                        addAssistantMessage(String(localized: "Error: Unexpected response format from Gemini"))
                     }
                 }
             }
         } catch {
             print("❌ ScreenAssistant: Gemini JSON parsing error - \(error)")
-            addAssistantMessage("Error: Failed to parse response - \(error.localizedDescription)")
+            addAssistantMessage(String(localized: "Error: Failed to parse response - \(error.localizedDescription)"))
         }
     }
     
@@ -891,13 +891,13 @@ class ScreenAssistantManager: NSObject, ObservableObject {
                         handleOpenAIError(error: error)
                     } else {
                         print("❌ ScreenAssistant: Unexpected OpenAI response format")
-                        addAssistantMessage("Error: Unexpected response format from OpenAI")
+                        addAssistantMessage(String(localized: "Error: Unexpected response format from OpenAI"))
                     }
                 }
             }
         } catch {
             print("❌ ScreenAssistant: OpenAI JSON parsing error - \(error)")
-            addAssistantMessage("Error: Failed to parse response - \(error.localizedDescription)")
+            addAssistantMessage(String(localized: "Error: Failed to parse response - \(error.localizedDescription)"))
         }
     }
     
@@ -917,13 +917,13 @@ class ScreenAssistantManager: NSObject, ObservableObject {
                         handleClaudeError(error: error)
                     } else {
                         print("❌ ScreenAssistant: Unexpected Claude response format")
-                        addAssistantMessage("Error: Unexpected response format from Claude")
+                        addAssistantMessage(String(localized: "Error: Unexpected response format from Claude"))
                     }
                 }
             }
         } catch {
             print("❌ ScreenAssistant: Claude JSON parsing error - \(error)")
-            addAssistantMessage("Error: Failed to parse response - \(error.localizedDescription)")
+            addAssistantMessage(String(localized: "Error: Failed to parse response - \(error.localizedDescription)"))
         }
     }
     
@@ -939,12 +939,12 @@ class ScreenAssistantManager: NSObject, ObservableObject {
                     addAssistantMessage(content)
                 } else {
                     print("❌ ScreenAssistant: Unexpected Ollama response format")
-                    addAssistantMessage("Error: Unexpected response format from local model")
+                    addAssistantMessage(String(localized: "Error: Unexpected response format from local model"))
                 }
             }
         } catch {
             print("❌ ScreenAssistant: Ollama JSON parsing error - \(error)")
-            addAssistantMessage("Error: Failed to parse response - \(error.localizedDescription)")
+            addAssistantMessage(String(localized: "Error: Failed to parse response - \(error.localizedDescription)"))
         }
     }
     
@@ -1208,19 +1208,19 @@ class ScreenAssistantManager: NSObject, ObservableObject {
         
         switch statusCode {
         case 429:
-            userFriendlyMessage = "🚫 **Rate Limited**\n\n\(provider.displayName) is currently rate limiting requests. Please wait a moment and try again."
+            userFriendlyMessage = String(localized: "🚫 **Rate Limited**\n\n\(provider.displayName) is currently rate limiting requests. Please wait a moment and try again.")
         case 400:
-            userFriendlyMessage = "❌ **Invalid Request**\n\nThere was an issue with your request to \(provider.displayName). Please check your message and attached files."
+            userFriendlyMessage = String(localized: "❌ **Invalid Request**\n\nThere was an issue with your request to \(provider.displayName). Please check your message and attached files.")
         case 401:
-            userFriendlyMessage = "🔑 **Authentication Error**\n\nYour \(provider.displayName) API key appears to be invalid. Please check your API key in model settings."
+            userFriendlyMessage = String(localized: "🔑 **Authentication Error**\n\nYour \(provider.displayName) API key appears to be invalid. Please check your API key in model settings.")
         case 403:
-            userFriendlyMessage = "🚫 **Access Denied**\n\nYour \(provider.displayName) API key doesn't have permission for this request."
+            userFriendlyMessage = String(localized: "🚫 **Access Denied**\n\nYour \(provider.displayName) API key doesn't have permission for this request.")
         case 404:
-            userFriendlyMessage = "🔍 **Model Not Found**\n\nThe requested model is not available on \(provider.displayName)."
+            userFriendlyMessage = String(localized: "🔍 **Model Not Found**\n\nThe requested model is not available on \(provider.displayName).")
         case 500, 502, 503:
-            userFriendlyMessage = "⚠️ **Server Error**\n\n\(provider.displayName) servers are experiencing issues. Please try again in a few minutes."
+            userFriendlyMessage = String(localized: "⚠️ **Server Error**\n\n\(provider.displayName) servers are experiencing issues. Please try again in a few minutes.")
         default:
-            userFriendlyMessage = "❌ **API Error (\(statusCode))**\n\n\(provider.displayName) returned an error. Please try again."
+            userFriendlyMessage = String(localized: "❌ **API Error (\(statusCode))**\n\n\(provider.displayName) returned an error. Please try again.")
         }
         
         addAssistantMessage(userFriendlyMessage)
@@ -1230,7 +1230,7 @@ class ScreenAssistantManager: NSObject, ObservableObject {
         guard let code = error["code"] as? Int,
               let message = error["message"] as? String else {
             print("❌ ScreenAssistant: Unknown API Error")
-            addAssistantMessage("An unknown error occurred. Please try again.")
+            addAssistantMessage(String(localized: "An unknown error occurred. Please try again."))
             return
         }
         
@@ -1242,28 +1242,28 @@ class ScreenAssistantManager: NSObject, ObservableObject {
         case 429:
             // Quota exceeded
             if message.contains("quota") || message.contains("exceeded") {
-                userFriendlyMessage = "🚫 **API Quota Exceeded**\n\nYou've reached your API usage limit. This usually happens when:\n\n• Too many requests in a short time\n• Daily/monthly quota exceeded\n• Free tier limits reached\n\n**What you can do:**\n• Wait a few minutes and try again\n• Check your API billing\n• Consider upgrading your plan\n\n*The system will work again once the quota resets.*"
+                userFriendlyMessage = String(localized: "🚫 **API Quota Exceeded**\n\nYou've reached your API usage limit. This usually happens when:\n\n• Too many requests in a short time\n• Daily/monthly quota exceeded\n• Free tier limits reached\n\n**What you can do:**\n• Wait a few minutes and try again\n• Check your API billing\n• Consider upgrading your plan\n\n*The system will work again once the quota resets.*")
             } else {
-                userFriendlyMessage = "⏰ **Rate Limited**\n\nToo many requests. Please wait a moment and try again."
+                userFriendlyMessage = String(localized: "⏰ **Rate Limited**\n\nToo many requests. Please wait a moment and try again.")
             }
             
         case 400:
-            userFriendlyMessage = "❌ **Invalid Request**\n\nThere was an issue with your request. Please check your message and attached files."
+            userFriendlyMessage = String(localized: "❌ **Invalid Request**\n\nThere was an issue with your request. Please check your message and attached files.")
             
         case 401:
-            userFriendlyMessage = "🔑 **Authentication Error**\n\nYour API key appears to be invalid. Please check your API key in settings."
+            userFriendlyMessage = String(localized: "🔑 **Authentication Error**\n\nYour API key appears to be invalid. Please check your API key in settings.")
             
         case 403:
-            userFriendlyMessage = "🚫 **Access Denied**\n\nYour API key doesn't have permission for this request. Please check your API key settings."
+            userFriendlyMessage = String(localized: "🚫 **Access Denied**\n\nYour API key doesn't have permission for this request. Please check your API key settings.")
             
         case 404:
-            userFriendlyMessage = "🔍 **Model Not Found**\n\nThe requested AI model is not available. Please try again later."
+            userFriendlyMessage = String(localized: "🔍 **Model Not Found**\n\nThe requested AI model is not available. Please try again later.")
             
         case 500, 502, 503:
-            userFriendlyMessage = "⚠️ **Server Error**\n\nThe AI service is experiencing issues. Please try again in a few minutes."
+            userFriendlyMessage = String(localized: "⚠️ **Server Error**\n\nThe AI service is experiencing issues. Please try again in a few minutes.")
             
         default:
-            userFriendlyMessage = "❌ **API Error (\(code))**\n\n\(message.components(separatedBy: ".").first ?? message)"
+            userFriendlyMessage = String(localized: "❌ **API Error (\(code))**\n\n\(message.components(separatedBy: ".").first ?? message)")
         }
         
         addAssistantMessage(userFriendlyMessage)
@@ -1271,19 +1271,19 @@ class ScreenAssistantManager: NSObject, ObservableObject {
     
     private func handleOpenAIError(error: [String: Any]) {
         if let message = error["message"] as? String {
-            let userFriendlyMessage = "❌ **OpenAI Error**\n\n\(message)"
+            let userFriendlyMessage = String(localized: "❌ **OpenAI Error**\n\n\(message)")
             addAssistantMessage(userFriendlyMessage)
         } else {
-            addAssistantMessage("❌ **OpenAI Error**\n\nAn unknown error occurred with OpenAI.")
+            addAssistantMessage(String(localized: "❌ **OpenAI Error**\n\nAn unknown error occurred with OpenAI."))
         }
     }
     
     private func handleClaudeError(error: [String: Any]) {
         if let message = error["message"] as? String {
-            let userFriendlyMessage = "❌ **Claude Error**\n\n\(message)"
+            let userFriendlyMessage = String(localized: "❌ **Claude Error**\n\n\(message)")
             addAssistantMessage(userFriendlyMessage)
         } else {
-            addAssistantMessage("❌ **Claude Error**\n\nAn unknown error occurred with Claude.")
+            addAssistantMessage(String(localized: "❌ **Claude Error**\n\nAn unknown error occurred with Claude."))
         }
     }
 }

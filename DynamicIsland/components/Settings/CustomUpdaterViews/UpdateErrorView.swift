@@ -114,7 +114,7 @@ struct UpdateErrorView: View {
     UpdateErrorView(state: {
         let s = UpdateUIState()
         s.phase = .error
-        s.errorMessage = "The update could not be downloaded. Please check your internet connection and try again."
+        s.errorMessage = String(localized: "The update could not be downloaded. Please check your internet connection and try again.")
         return s
     }())
 }

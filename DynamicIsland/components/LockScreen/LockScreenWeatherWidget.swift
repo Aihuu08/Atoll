@@ -1214,7 +1214,7 @@ struct LockScreenWeatherWidget: View {
 			return trimmed
 		}
 		if focusMode == .doNotDisturb {
-			return "Do Not Disturb"
+			return String(localized: "Do Not Disturb")
 		}
 		let fallback = focusMode.displayName
 		return fallback.isEmpty ? "Focus" : fallback

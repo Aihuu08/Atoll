@@ -751,7 +751,7 @@ final class ShelfItemViewModel: ObservableObject {
             guard let fileURL = targetURL else { return }
 
             let panel = NSOpenPanel()
-            panel.title = "Choose Application"
+            panel.title = String(localized: "Choose Application")
             panel.message = "Choose an application to open the document \"\(item.displayName)\"."
             panel.prompt = "Open"
             panel.allowsMultipleSelection = false
@@ -909,7 +909,7 @@ final class ShelfItemViewModel: ObservableObject {
                     let didStart = fileURL.startAccessingSecurityScopedResource()
 
                     let savePanel = NSSavePanel()
-                    savePanel.title = "Rename File"
+                    savePanel.title = String(localized: "Rename File")
                     savePanel.prompt = "Rename"
                     savePanel.nameFieldStringValue = fileURL.lastPathComponent
                     savePanel.directoryURL = fileURL.deletingLastPathComponent()

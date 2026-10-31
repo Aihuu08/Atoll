@@ -1339,7 +1339,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func exportLogs() {
         let savePanel = NSSavePanel()
         savePanel.nameFieldStringValue = "Atoll_Logs.zip"
-        savePanel.title = "Export Logs & Crash Reports"
+        savePanel.title = String(localized: "Export Logs & Crash Reports")
         
         savePanel.begin { response in
             guard response == .OK, let url = savePanel.url else { return }

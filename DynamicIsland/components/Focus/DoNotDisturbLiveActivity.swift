@@ -196,7 +196,7 @@ struct DoNotDisturbLiveActivity: View {
             if !trimmed.isEmpty {
                 return trimmed
             } else if focusMode == .doNotDisturb {
-                return "Do Not Disturb"
+                return String(localized: "Do Not Disturb")
             } else {
                 let fallback = focusMode.displayName
                 return fallback.isEmpty ? "Focus" : fallback
@@ -208,9 +208,9 @@ struct DoNotDisturbLiveActivity: View {
 
     private var accessibilityDescription: String {
         if manager.isDoNotDisturbActive {
-            return "Focus active: \(labelText)"
+            return String(localized: "Focus active: \(labelText)")
         } else {
-            return "Focus inactive"
+            return String(localized: "Focus inactive")
         }
     }
 

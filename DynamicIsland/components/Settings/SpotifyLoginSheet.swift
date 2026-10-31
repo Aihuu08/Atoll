@@ -66,7 +66,7 @@ struct SpotifyLoginSheet: View {
                 .help("Spotify often blocks in-app logins. Sign in via your normal browser, then paste sp_dc in Settings.")
                 Button("Reset Session") {
                     NotificationCenter.default.post(name: .spotifyLoginSheetReset, object: nil)
-                    statusText = "Session cleared. Sign in again to capture the cookie."
+                    statusText = String(localized: "Session cleared. Sign in again to capture the cookie.")
                 }
                 Button("Cancel") { dismiss() }
                     .keyboardShortcut(.cancelAction)
@@ -76,7 +76,7 @@ struct SpotifyLoginSheet: View {
             SpotifyLoginWebView { value in
                 guard !didCapture else { return }
                 didCapture = true
-                statusText = "Captured sp_dc cookie. Validating…"
+                statusText = String(localized: "Captured sp_dc cookie. Validating…")
                 onCapture(value)
                 dismiss()
             } onStatus: { message in

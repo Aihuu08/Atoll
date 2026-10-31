@@ -2466,14 +2466,14 @@ private struct ExternalDisplayIntegrationsSection: View {
     private var providerStatusText: String {
         switch thirdPartyDDCProvider {
         case .betterDisplay:
-            if ddcProviderRunning { return "Running" }
-            if betterDisplayManager.isDetected { return "Not running" }
-            return "Not detected"
+            if ddcProviderRunning { return String(localized: "Running") }
+            if betterDisplayManager.isDetected { return String(localized: "Not running") }
+            return String(localized: "Not detected")
         case .lunar:
-            if lunarManager.isConnected { return "Connected" }
-            if ddcProviderRunning { return "Running" }
-            if lunarManager.isDetected { return "Not running" }
-            return "Not detected"
+            if lunarManager.isConnected { return String(localized: "Connected") }
+            if ddcProviderRunning { return String(localized: "Running") }
+            if lunarManager.isDetected { return String(localized: "Not running") }
+            return String(localized: "Not detected")
         }
     }
 
@@ -7766,7 +7766,7 @@ struct TimerSettings: View {
 
     private func selectCustomTimerSound() {
         let panel = NSOpenPanel()
-        panel.title = "Select Timer Sound"
+        panel.title = String(localized: "Select Timer Sound")
         panel.allowedContentTypes = [.audio]
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
@@ -8361,7 +8361,7 @@ struct StatsSettings: View {
                     LLMUsageManager.shared.refreshAll(force: true)
                     accountPendingDeletion = nil
                 } catch {
-                    newAPIAccountErrorMessage = "Failed to delete \(account.name): \(error.localizedDescription)"
+                    newAPIAccountErrorMessage = String(localized: "Failed to delete \(account.name): \(error.localizedDescription)")
                 }
             }
             Button("Cancel", role: .cancel) {
@@ -8634,16 +8634,16 @@ struct ClipboardSettings: View {
         let interval = Date().timeIntervalSince(date)
 
         if interval < 60 {
-            return "Just now"
+            return String(localized: "Just now")
         } else if interval < 3600 {
             let minutes = Int(interval / 60)
-            return "\(minutes)m ago"
+            return String(localized: "\(minutes)m ago")
         } else if interval < 86400 {
             let hours = Int(interval / 3600)
-            return "\(hours)h ago"
+            return String(localized: "\(hours)h ago")
         } else {
             let days = Int(interval / 86400)
-            return "\(days)d ago"
+            return String(localized: "\(days)d ago")
         }
     }
 }
@@ -8814,16 +8814,16 @@ struct ScreenAssistantSettings: View {
         let interval = Date().timeIntervalSince(date)
 
         if interval < 60 {
-            return "Just now"
+            return String(localized: "Just now")
         } else if interval < 3600 {
             let minutes = Int(interval / 60)
-            return "\(minutes)m ago"
+            return String(localized: "\(minutes)m ago")
         } else if interval < 86400 {
             let hours = Int(interval / 3600)
-            return "\(hours)h ago"
+            return String(localized: "\(hours)h ago")
         } else {
             let days = Int(interval / 86400)
-            return "\(days)d ago"
+            return String(localized: "\(days)d ago")
         }
     }
 }
