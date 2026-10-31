@@ -120,7 +120,7 @@ final class AppleMusicAirPlayManager: ObservableObject {
         defer { isBusy = false }
 
         let newState = !device.isSelected
-        let escapedName = device.name.replacingOccurrences(of: "\"", with: "\\\"")
+        let escapedName = Self.appleScriptEscaped(device.name)
         let script = """
         tell application "Music"
             try
@@ -214,7 +214,7 @@ final class AppleMusicAirPlayManager: ObservableObject {
     /// set to that device's volume (waypoint), then to the actual target — at most
     /// two AppleScript calls.
     private func commitVolume(volume: Int, deviceName: String, deviceID: String) async {
-        let escapedName = deviceName.replacingOccurrences(of: "\"", with: "\\\"")
+        let escapedName = Self.appleScriptEscaped(deviceName)
         let current = lastCommittedVolume[deviceID] ?? volume
 
         let otherMaxVolume = devices
@@ -229,6 +229,16 @@ final class AppleMusicAirPlayManager: ObservableObject {
 
         await sendVolumeAppleScript(escapedName: escapedName, volume: volume)
         lastCommittedVolume[deviceID] = volume
+    }
+
+    /// AirPlay 设备名由局域网中的设备广播，属于不可信输入。必须先转义反斜杠再转义引号，
+    /// 否则名字里的 `\"` 可以提前结束 AppleScript 字符串并注入任意语句（如 do shell script）。
+    static func appleScriptEscaped(_ value: String) -> String {
+        value
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+            .replacingOccurrences(of: "\r", with: " ")
+            .replacingOccurrences(of: "\n", with: " ")
     }
 
     private func sendVolumeAppleScript(escapedName: String, volume: Int) async {
