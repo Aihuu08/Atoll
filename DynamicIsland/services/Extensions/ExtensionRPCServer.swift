@@ -101,6 +101,16 @@ final class ExtensionRPCServer {
         let params = NWParameters(tls: nil)
         let wsOptions = NWProtocolWebSocket.Options()
         wsOptions.autoReplyPing = true
+        // 安全：浏览器发起的 WebSocket 握手一定带 Origin 头，原生扩展客户端通常不带。
+        // 拒绝带 Origin 的握手，防止任意网页通过 ws://127.0.0.1:9020 驱动扩展 API。
+        wsOptions.setClientRequestHandler(queue) { _, additionalHeaders in
+            let fromBrowser = additionalHeaders.contains { $0.name.lowercased() == "origin" }
+            return NWProtocolWebSocket.Response(
+                status: fromBrowser ? .reject : .accept,
+                subprotocol: nil,
+                additionalHeaders: nil
+            )
+        }
         params.defaultProtocolStack.applicationProtocols.insert(wsOptions, at: 0)
         // Without this the listener takes the wildcard address and the port is
         // reachable from the local network.

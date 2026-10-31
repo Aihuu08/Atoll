@@ -210,7 +210,9 @@ final class ExtensionAuthorizationManager: ObservableObject {
     }
 
     private func defaultScopes() -> Set<ExtensionPermissionScope> {
-        Set(ExtensionPermissionScope.allCases)
+        // 安全：文件共享可以读取暂存架里的文件内容，且客户端身份只是自报的
+        // bundleIdentifier，因此不再默认授予，需要用户在设置中手动勾选。
+        Set(ExtensionPermissionScope.allCases).subtracting([.fileSharing])
     }
 
     private func persistEntries() {

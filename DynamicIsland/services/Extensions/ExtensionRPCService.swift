@@ -570,10 +570,18 @@ final class ExtensionRPCService {
                       let fileName = fileObj["fileName"]?.stringValue,
                       let fileData = Data(base64Encoded: dataStr) else { continue }
 
+                // 安全：fileName 来自 RPC 客户端，只取最后一个路径分量，
+                // 防止 "../" 路径穿越把文件写到 AtollExtensionFiles 目录之外。
+                let safeFileName = (fileName as NSString).lastPathComponent
+                guard !safeFileName.isEmpty, safeFileName != ".", safeFileName != "..",
+                      !safeFileName.hasPrefix(".") else { continue }
+
                 let tempDir = FileManager.default.temporaryDirectory
                     .appendingPathComponent("AtollExtensionFiles", isDirectory: true)
                 try? FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
-                let fileURL = tempDir.appendingPathComponent(fileName)
+                let fileURL = tempDir.appendingPathComponent(safeFileName)
+                guard fileURL.standardizedFileURL.deletingLastPathComponent().path
+                        == tempDir.standardizedFileURL.path else { continue }
                 guard (try? fileData.write(to: fileURL)) != nil else { continue }
 
                 if let bookmark = try? Bookmark(url: fileURL) {

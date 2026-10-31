@@ -708,8 +708,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         LockScreenLiveActivityWindowManager.shared.configure(viewModel: vm)
         LockScreenManager.shared.configure(viewModel: vm)
-        extensionXPCServiceHost.start()
-        extensionRPCServer.start()
+        // 安全：只有在“启用第三方扩展”打开时才监听 XPC 和 127.0.0.1:9020，
+        // 关闭开关时立即停止监听（原来是无条件启动）。
+        Defaults.publisher(.enableThirdPartyExtensions)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] change in
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
+                    if change.newValue {
+                        self.extensionXPCServiceHost.start()
+                        self.extensionRPCServer.start()
+                    } else {
+                        self.extensionXPCServiceHost.stop()
+                        self.extensionRPCServer.stop()
+                    }
+                }
+            }
+            .store(in: &cancellables)
         
         // Migrate legacy progress bar settings
         Defaults.Keys.migrateProgressBarStyle()
