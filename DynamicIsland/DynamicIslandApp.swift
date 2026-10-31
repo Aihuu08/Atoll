@@ -708,6 +708,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         LockScreenLiveActivityWindowManager.shared.configure(viewModel: vm)
         LockScreenManager.shared.configure(viewModel: vm)
+        // 安全：把旧版明文存放在 UserDefaults 里的 AI 助手 API key 迁移到钥匙串。
+        ScreenAssistantAPIKeys.migrateLegacyKeys()
+
         // 安全：只有在“启用第三方扩展”打开时才监听 XPC 和 127.0.0.1:9020，
         // 关闭开关时立即停止监听（原来是无条件启动）。
         Defaults.publisher(.enableThirdPartyExtensions)

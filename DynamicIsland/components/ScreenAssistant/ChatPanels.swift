@@ -465,16 +465,16 @@ struct ChatInputView: View {
         
         switch provider {
         case .gemini:
-            apiKey = Defaults[.geminiApiKey]
+            apiKey = ScreenAssistantAPIKeys.gemini
         case .openai:
-            apiKey = Defaults[.openaiApiKey]
+            apiKey = ScreenAssistantAPIKeys.openai
         case .claude:
-            apiKey = Defaults[.claudeApiKey]
+            apiKey = ScreenAssistantAPIKeys.claude
         case .local:
             // Local models don't need API keys
             apiKey = "local"
         case .groq:
-            apiKey = Defaults[.groqApiKey]
+            apiKey = ScreenAssistantAPIKeys.groq
         }
         
         if apiKey.isEmpty {

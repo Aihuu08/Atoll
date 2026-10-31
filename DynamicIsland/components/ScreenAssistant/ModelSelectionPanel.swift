@@ -123,11 +123,11 @@ struct ModelSelectionView: View {
     @State private var enableThinking: Bool = Defaults[.enableThinkingMode]
     
     // API Keys
-    @State private var geminiApiKey: String = Defaults[.geminiApiKey]
-    @State private var openaiApiKey: String = Defaults[.openaiApiKey]
-    @State private var claudeApiKey: String = Defaults[.claudeApiKey]
+    @State private var geminiApiKey: String = ScreenAssistantAPIKeys.gemini
+    @State private var openaiApiKey: String = ScreenAssistantAPIKeys.openai
+    @State private var claudeApiKey: String = ScreenAssistantAPIKeys.claude
     @State private var localEndpoint: String = Defaults[.localModelEndpoint]
-    @State private var groqApiKey: String = Defaults[.groqApiKey]
+    @State private var groqApiKey: String = ScreenAssistantAPIKeys.groq
     
     @State private var showingApiKeyAlert = false
     
@@ -312,11 +312,11 @@ struct ModelSelectionView: View {
         ensureValidModelSelection()
         enableThinking = Defaults[.enableThinkingMode]
         
-        geminiApiKey = Defaults[.geminiApiKey]
-        openaiApiKey = Defaults[.openaiApiKey]
-        claudeApiKey = Defaults[.claudeApiKey]
+        geminiApiKey = ScreenAssistantAPIKeys.gemini
+        openaiApiKey = ScreenAssistantAPIKeys.openai
+        claudeApiKey = ScreenAssistantAPIKeys.claude
         localEndpoint = Defaults[.localModelEndpoint]
-        groqApiKey = Defaults[.groqApiKey]
+        groqApiKey = ScreenAssistantAPIKeys.groq
     }
     
     private func saveConfiguration() {
@@ -326,11 +326,11 @@ struct ModelSelectionView: View {
         Defaults[.selectedAIModel] = selectedModel
         Defaults[.enableThinkingMode] = enableThinking
         
-        Defaults[.geminiApiKey] = geminiApiKey
-        Defaults[.openaiApiKey] = openaiApiKey
-        Defaults[.claudeApiKey] = claudeApiKey
+        ScreenAssistantAPIKeys.gemini = geminiApiKey
+        ScreenAssistantAPIKeys.openai = openaiApiKey
+        ScreenAssistantAPIKeys.claude = claudeApiKey
         Defaults[.localModelEndpoint] = localEndpoint
-        Defaults[.groqApiKey] = groqApiKey
+        ScreenAssistantAPIKeys.groq = groqApiKey
         
         closePanel()
         

@@ -8652,7 +8652,7 @@ struct ScreenAssistantSettings: View {
     @ObservedObject var screenAssistantManager = ScreenAssistantManager.shared
     @Default(.enableScreenAssistant) var enableScreenAssistant
     @Default(.screenAssistantDisplayMode) var screenAssistantDisplayMode
-    @Default(.geminiApiKey) var geminiApiKey
+    @State private var geminiApiKey = ScreenAssistantAPIKeys.gemini
     @State private var apiKeyText = ""
     @State private var showingApiKey = false
 
@@ -8690,7 +8690,8 @@ struct ScreenAssistantSettings: View {
                             if showingApiKey {
                                 showingApiKey = false
                                 if !apiKeyText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                                    Defaults[.geminiApiKey] = apiKeyText
+                                    ScreenAssistantAPIKeys.gemini = apiKeyText
+                                    geminiApiKey = ScreenAssistantAPIKeys.gemini
                                 }
                                 apiKeyText = ""
                             } else {
@@ -8718,7 +8719,8 @@ struct ScreenAssistantSettings: View {
                                 Spacer()
 
                                 Button("Save") {
-                                    Defaults[.geminiApiKey] = apiKeyText
+                                    ScreenAssistantAPIKeys.gemini = apiKeyText
+                                    geminiApiKey = ScreenAssistantAPIKeys.gemini
                                     showingApiKey = false
                                     apiKeyText = ""
                                 }
