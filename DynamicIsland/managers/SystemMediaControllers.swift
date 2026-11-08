@@ -648,7 +648,7 @@ final class SystemBrightnessController {
     private let notificationCenter = NotificationCenter.default
     private var observers: [NSObjectProtocol] = []
     private var notificationsInstalled = false
-    private var displayID: CGDirectDisplayID = CGMainDisplayID()
+    private var displayID: CGDirectDisplayID = SystemBrightnessController.brightnessDisplayID()
     private var brightnessAnimationTimer: Timer?
     private var brightnessAnimationStart: Float = 0
     private var brightnessAnimationTarget: Float = 0
@@ -890,6 +890,19 @@ final class SystemBrightnessController {
         return service
     }
 
+    /// The built-in panel when there is one, else the main display. With an
+    /// external monitor set as main, `CGMainDisplayID()` is that monitor, which
+    /// DisplayServices rejects (status 1000), so the brightness keys moved nothing.
+    private static func brightnessDisplayID() -> CGDirectDisplayID {
+        var ids = [CGDirectDisplayID](repeating: 0, count: 16)
+        var count: UInt32 = 0
+        if CGGetActiveDisplayList(UInt32(ids.count), &ids, &count) == .success,
+           let builtIn = ids.prefix(Int(count)).first(where: { CGDisplayIsBuiltin($0) != 0 }) {
+            return builtIn
+        }
+        return CGMainDisplayID()
+    }
+
     private func setBrightnessViaDisplayServices(_ value: Float) -> Bool {
         guard let status = DisplayServicesDynamic.shared.setBrightness(displayID: displayID, value: value) else {
             return false
@@ -897,8 +910,8 @@ final class SystemBrightnessController {
         if status == kIOReturnSuccess {
             return true
         }
-        // Attempt to refresh display ID in case the main display changed
-        displayID = CGMainDisplayID()
+        // Attempt to refresh display ID in case the displays changed
+        displayID = Self.brightnessDisplayID()
         guard let retry = DisplayServicesDynamic.shared.setBrightness(displayID: displayID, value: value) else {
             NSLog("⚠️ DisplayServicesSetBrightness unavailable after display refresh")
             return false
@@ -917,7 +930,7 @@ final class SystemBrightnessController {
         if result.status == kIOReturnSuccess {
             return result.value
         }
-        displayID = CGMainDisplayID()
+        displayID = Self.brightnessDisplayID()
         guard let retry = DisplayServicesDynamic.shared.getBrightness(displayID: displayID) else {
             NSLog("⚠️ DisplayServicesGetBrightness unavailable after display refresh")
             return nil
